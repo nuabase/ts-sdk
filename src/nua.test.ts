@@ -3,7 +3,6 @@ import z from 'zod';
 
 describe('map', () => {
   test('basic response shape validation', async () => {
-    // const nua = new Nua({ baseUrl: 'https://api.dbu6.dev' });
     const nua = new Nua();
 
     const FoodItemSchema = z.object({
