@@ -66,7 +66,7 @@ npm install nuabase zod
 ## Lead Enrichment Example
 
 ```ts
-import Nua from 'nuabase';
+import { Nua } from 'nuabase';
 import { z } from 'zod';
 
 const nua = new Nua({ apiKey: 'API-KEY' });

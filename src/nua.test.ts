@@ -1,4 +1,4 @@
-import Nua from './nua';
+import { Nua } from './nua';
 import z from 'zod';
 
 describe('map', () => {

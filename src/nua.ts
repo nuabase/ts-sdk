@@ -154,7 +154,7 @@ type MapInvoker<OutputZodSchema extends z.ZodTypeAny, OutputName extends string>
   ) => Promise<MapResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
 };
 
-export default class Nua {
+export class Nua {
   apiClient: NuabaseAPIClient;
 
   constructor(config?: NuabaseConfig) {
