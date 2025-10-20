@@ -1,3 +1,5 @@
+mise.production.toml
+mise.development.toml
 mise.toml
 
 .yarn/*
