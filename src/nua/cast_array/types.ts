@@ -1,5 +1,5 @@
 import { NuabaseError } from '../../lib/error-response';
-import type { NuaApiResponse_CastArray } from './response-schema';
+import type { NuaApiResponse_CastArray, PrimaryKeyedInputRecord } from './response-schema';
 import { z } from 'zod';
 
 // Generic glossary:
@@ -19,22 +19,20 @@ export type ArrayFnDef<OutputName extends string, OutputZodSchema extends z.ZodT
 export type ArrayFnResult<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
+  PrimaryKeyName extends string,
+  InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
 > =
   | NuabaseError
-  | NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
+  | NuaApiResponse_CastArray<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>;
 
+// The generic constraint on `InputRecord` ensures every supplied row includes the primary key property.
 export type ArrayFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
-  <InputRecord extends Record<string, unknown>, PrimaryKeyName extends keyof InputRecord & string>(
+  <PrimaryKeyName extends string, InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>>(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
-  now: <
-    InputRecord extends Record<string, unknown>,
-    PrimaryKeyName extends keyof InputRecord & string,
-  >(
+  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>>;
+  now: <PrimaryKeyName extends string, InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>>(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ) => Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+  ) => Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>>;
 };

@@ -1,12 +1,13 @@
 import { NuabaseAPIClient } from '../../lib/api-client';
 import { validateArrayRequestParams } from './request-validation';
-import { zs_NuaApiResponse_CastArray } from './response-schema';
+import { PrimaryKeyedInputRecord, zs_NuaApiResponse_CastArray } from './response-schema';
 import { ArrayFn, ArrayFnDef, ArrayFnResult } from './types';
 import { z } from 'zod';
 
+// Keep the request payload typed so every record includes the primary key we send to the API.
 const toCastArrayApiRequest = <
-  InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends string,
+  InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
 >(
   prompt: string,
   data: InputRecord[],
@@ -31,14 +32,15 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
 ): ArrayFn<OutputZodSchema, OutputName> => {
   const outputJsonSchema = z.toJSONSchema(fnDef.output.schema);
 
+  // The generic bounds ensure the TS compiler enforces that every row includes the named primary key.
   const makeRequest = async <
-    InputRecord extends Record<string, unknown>,
-    PrimaryKeyName extends keyof InputRecord & string,
+    PrimaryKeyName extends string,
+    InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
   >(
     path: 'cast/array' | 'cast/array/now',
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>> => {
     validateArrayRequestParams(data, primaryKeyName);
 
     const response = await client.request(
@@ -53,8 +55,8 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
     const successSchema = zs_NuaApiResponse_CastArray<
       OutputZodSchema,
       OutputName,
-      InputRecord,
-      PrimaryKeyName
+      PrimaryKeyName,
+      InputRecord
     >(primaryKeyName, outputKey, fnDef.output.schema);
 
     const parsedResponse = successSchema.safeParse(response);
@@ -74,22 +76,22 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
   };
 
   const baseFn = async <
-    InputRecord extends Record<string, unknown>,
-    PrimaryKeyName extends keyof InputRecord & string,
+    PrimaryKeyName extends string,
+    InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
   >(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>> => {
     return await makeRequest('cast/array', data, primaryKeyName);
   };
 
   const nowFn = async <
-    InputRecord extends Record<string, unknown>,
-    PrimaryKeyName extends keyof InputRecord & string,
+    PrimaryKeyName extends string,
+    InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
   >(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>> => {
     return await makeRequest('cast/array/now', data, primaryKeyName);
   };
 
