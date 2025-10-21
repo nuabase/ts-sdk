@@ -8,15 +8,17 @@ import { z } from 'zod';
 // - InputRecord: caller-supplied row shape containing the primary key.
 // - PrimaryKeyName: literal key on InputRecord that identifies a row.
 
-type MappingFnDef<OutputName extends string, OutputZodSchema extends z.ZodTypeAny> = {
-  name: OutputName;
+type ArrayFnDef<OutputName extends string, OutputZodSchema extends z.ZodTypeAny> = {
   prompt: string;
-  output: OutputZodSchema;
+  output: {
+    name: OutputName;
+    schema: OutputZodSchema;
+  };
 };
 
 // NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
 // see the zodSchema below
-type MapResponseRecord<
+type ArrayResponseRecord<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -27,7 +29,7 @@ type MapResponseRecord<
     : z.infer<OutputZodSchema>;
 };
 
-const zs_MapResponseRecord = <
+const zs_ArrayResponseRecord = <
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -36,7 +38,7 @@ const zs_MapResponseRecord = <
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<MapResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+): z.ZodType<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
   const primaryKeySchema = z.any() as z.ZodType<InputRecord[PrimaryKeyName]>;
 
   return z
@@ -45,20 +47,20 @@ const zs_MapResponseRecord = <
       [outputKey]: outputSchema,
     } as Record<PrimaryKeyName | OutputName, z.ZodTypeAny>)
     .strict() as z.ZodType<
-    MapResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+    ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
   >;
 };
 
 // NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
 // see the zodSchema below
-type MapSuccessDataResult<
+type SuccessData_Array<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
-> = Array<MapResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+> = Array<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
 
-const zs_MapSuccessDataResult = <
+const zs_SuccessData_Array = <
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -67,8 +69,8 @@ const zs_MapSuccessDataResult = <
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<MapSuccessDataResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-  const recordSchema = zs_MapResponseRecord<
+): z.ZodType<SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  const recordSchema = zs_ArrayResponseRecord<
     OutputZodSchema,
     OutputName,
     InputRecord,
@@ -76,28 +78,28 @@ const zs_MapSuccessDataResult = <
   >(primaryKeyName, outputKey, outputSchema);
 
   return z.array(recordSchema) as z.ZodType<
-    MapSuccessDataResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+    SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
   >;
 };
 
 // NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
 // see the zodSchema below
-type MapRequestApiResponse_Success<
+type SuccessResponse_Array<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
 > = {
-  data: MapSuccessDataResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
+  data: SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
   cacheHits: number;
   llmRequestId: string;
-  kind: 'map';
+  kind: 'cast/array';
   rowsWithNoResults: string[];
   isSuccess: true;
   isError?: false;
 };
 
-const zs_MapRequestApiResponse_Success = <
+const zs_SuccessResponse_Array = <
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -106,20 +108,17 @@ const zs_MapRequestApiResponse_Success = <
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<
-  MapRequestApiResponse_Success<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
-> => {
-  const dataSchema = zs_MapSuccessDataResult<
-    OutputZodSchema,
-    OutputName,
-    InputRecord,
-    PrimaryKeyName
-  >(primaryKeyName, outputKey, outputSchema);
+): z.ZodType<SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  const dataSchema = zs_SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>(
+    primaryKeyName,
+    outputKey,
+    outputSchema
+  );
 
   return z
     .object({
       llmRequestId: z.string(),
-      kind: z.literal('map'),
+      kind: z.literal('cast/array'),
       data: dataSchema,
       cacheHits: z.number(),
       rowsWithNoResults: z.array(z.string()),
@@ -127,31 +126,29 @@ const zs_MapRequestApiResponse_Success = <
       isError: z.optional(z.literal(false)),
     })
     .strict() as z.ZodType<
-    MapRequestApiResponse_Success<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+    SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
   >;
 };
 
-type MapResult<
+type ArrayFnResult<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
-> =
-  | NuabaseError
-  | MapRequestApiResponse_Success<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
+> = NuabaseError | SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
 
-type MapInvoker<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
+type ArrayFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
   <InputRecord extends Record<string, unknown>, PrimaryKeyName extends keyof InputRecord & string>(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ): Promise<MapResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
   now: <
     InputRecord extends Record<string, unknown>,
     PrimaryKeyName extends keyof InputRecord & string,
   >(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ) => Promise<MapResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+  ) => Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
 };
 
 export class Nua {
@@ -163,7 +160,7 @@ export class Nua {
 
   // Some of the checks here mirror type validation, but since our code could be run from
   // untyped JavaScript, we still want runtime checks
-  static validateMapRequestParams(data: unknown, primaryKeyName: unknown) {
+  static validateArrayRequestParams(data: unknown, primaryKeyName: unknown) {
     if (!Array.isArray(data)) {
       throw new Error('`data` must be an array of objects.');
     }
@@ -183,22 +180,22 @@ export class Nua {
     });
   }
 
-  map<OutputName extends string, OutputZodSchema extends z.ZodTypeAny>(
-    fnDef: MappingFnDef<OutputName, OutputZodSchema>
-  ): MapInvoker<OutputZodSchema, OutputName> {
+  createArrayFn<OutputName extends string, OutputZodSchema extends z.ZodTypeAny>(
+    fnDef: ArrayFnDef<OutputName, OutputZodSchema>
+  ): ArrayFn<OutputZodSchema, OutputName> {
     const client = this.apiClient;
-    const outputJsonSchema = z.toJSONSchema(fnDef.output);
+    const outputJsonSchema = z.toJSONSchema(fnDef.output.schema);
 
     const makeRequest = async <
       InputRecord extends Record<string, unknown>,
       PrimaryKeyName extends keyof InputRecord & string,
     >(
-      path: 'map' | 'map/now',
+      path: 'cast/array' | 'cast/array/now',
       data: InputRecord[],
       primaryKeyName: PrimaryKeyName
-    ): Promise<MapResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+    ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
       // This will throw errors in case of validation failures
-      Nua.validateMapRequestParams(data, primaryKeyName);
+      Nua.validateArrayRequestParams(data, primaryKeyName);
 
       const response = await client.request(path, {
         input: {
@@ -208,20 +205,20 @@ export class Nua {
         },
         output: {
           schema: outputJsonSchema,
-          name: fnDef.name,
+          name: fnDef.output.name,
         },
       });
 
       if (response && typeof response === 'object' && 'error' in response)
         return { error: String(response.error), isError: true };
 
-      const outputKey = fnDef.name;
-      const successSchema = zs_MapRequestApiResponse_Success<
+      const outputKey = fnDef.output.name;
+      const successSchema = zs_SuccessResponse_Array<
         OutputZodSchema,
         OutputName,
         InputRecord,
         PrimaryKeyName
-      >(primaryKeyName, outputKey, fnDef.output);
+      >(primaryKeyName, outputKey, fnDef.output.schema);
 
       const parsedResponse = successSchema.safeParse(response);
       if (!parsedResponse.success) {
@@ -239,28 +236,28 @@ export class Nua {
       };
     };
 
-    const baseInvoker = async <
+    const baseFn = async <
       InputRecord extends Record<string, unknown>,
       PrimaryKeyName extends keyof InputRecord & string,
     >(
       data: InputRecord[],
       primaryKeyName: PrimaryKeyName
-    ): Promise<MapResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-      return await makeRequest('map', data, primaryKeyName);
+    ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+      return await makeRequest('cast/array', data, primaryKeyName);
     };
 
-    const nowInvoker = async <
+    const nowFn = async <
       InputRecord extends Record<string, unknown>,
       PrimaryKeyName extends keyof InputRecord & string,
     >(
       data: InputRecord[],
       primaryKeyName: PrimaryKeyName
-    ): Promise<MapResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-      return await makeRequest('map/now', data, primaryKeyName);
+    ): Promise<ArrayFnResult<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+      return await makeRequest('cast/array/now', data, primaryKeyName);
     };
 
-    const fnReturnValue: MapInvoker<OutputZodSchema, OutputName> = Object.assign(baseInvoker, {
-      now: nowInvoker,
+    const fnReturnValue: ArrayFn<OutputZodSchema, OutputName> = Object.assign(baseFn, {
+      now: nowFn,
     });
 
     return fnReturnValue;

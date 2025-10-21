@@ -12,11 +12,13 @@ describe('map', () => {
       calories_per_unit: z.number(),
     });
 
-    const enrichCalories = nua.map({
-      name: 'foodItem',
-      output: FoodItemSchema,
+    const enrichCalories = nua.createArrayFn({
       prompt:
-        'Add a column calories_per_single_unit and include the number of calories for each food item, for 1 unit of its quantity',
+        'Add calories_per_single_unit with the number of calories for each food item, for 1 unit of its qty',
+      output: {
+        name: 'foodItem',
+        schema: FoodItemSchema,
+      },
     });
 
     const inputData = [
