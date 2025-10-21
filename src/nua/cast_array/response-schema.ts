@@ -1,77 +1,91 @@
 import { z } from 'zod';
 
-// NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
-// see the zodSchema below
-type ResponseRecord<
+// We expect the primary key for the rows - both input and output - to always be string | number
+export type UserDataPKValue = string | number;
+
+// Creates a new object type with only two properties:
+//   {[PrimaryKeyName]: string | number, [OutputName]: <type of the value represented by OutputZodSchema>}
+// 1. Pick creates a new object from the InputRecord, but with *only* the PrimaryKeyName (e.g., { id: string }).
+// 2. Then we intersect it with a new Record which has *only* the OutputName and its inferred type (e.g., { result: boolean }).
+// The final type is the merge of both, e.g., { id: string; result: boolean }.
+type ResponseRow<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
+  InputRecord extends Record<UserDataPKValue, unknown>,
+  PrimaryKeyName extends keyof InputRecord,
+> = Pick<InputRecord, PrimaryKeyName> & Record<OutputName, z.infer<OutputZodSchema>>;
+
+type NuaApiResponseShape<
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  InputRecord extends Record<UserDataPKValue, unknown>,
+  PrimaryKeyName extends keyof InputRecord,
 > = {
-  [Key in PrimaryKeyName | OutputName]: Key extends PrimaryKeyName
-    ? InputRecord[PrimaryKeyName]
-    : z.infer<OutputZodSchema>;
-};
-
-const zs_ResponseRecord = <
-  OutputZodSchema extends z.ZodTypeAny,
-  OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
->(
-  primaryKeyName: PrimaryKeyName,
-  outputKey: OutputName,
-  outputSchema: OutputZodSchema
-): z.ZodType<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-  const primaryKeySchema = z.any() as z.ZodType<InputRecord[PrimaryKeyName]>;
-
-  return z
-    .object({
-      [primaryKeyName]: primaryKeySchema,
-      [outputKey]: outputSchema,
-    } as Record<PrimaryKeyName | OutputName, z.ZodTypeAny>)
-    .strict() as z.ZodType<
-    ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
-  >;
-};
-
-// NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
-// see the zodSchema below
-export type NuaApiResponse_CastArray<
-  OutputZodSchema extends z.ZodTypeAny,
-  OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
-> = {
-  data: Array<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
-  cacheHits: number;
   llmRequestId: string;
   kind: 'cast/array';
+  data: Array<ResponseRow<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+  cacheHits: number;
   rowsWithNoResults: string[];
   isSuccess: true;
   isError?: false;
 };
 
-export const zs_NuaApiResponse_CastArray = <
+// This helper describes the exact runtime payload that the CastArray endpoint returns.
+// Keeping it split out lets us reuse the shape both for the Zod builder and for TS inference.
+type NuaApiResponseCastArrayBuilder = <
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
+  InputRecord extends Record<UserDataPKValue, unknown>,
+  PrimaryKeyName extends keyof InputRecord,
 >(
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<
-  NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
-> => {
+) => z.ZodType<NuaApiResponseShape<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+
+const zs_ResponseRecord = <
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  InputRecord extends Record<UserDataPKValue, unknown>,
+  PrimaryKeyName extends keyof InputRecord,
+>(
+  primaryKeyName: PrimaryKeyName,
+  outputKey: OutputName,
+  outputSchema: OutputZodSchema
+): z.ZodType<ResponseRow<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  // Zod cannot infer the literal key name here, so we upcast `z.any()` to the precise PK value type.
+  // At runtime we still accept any value, but at the type level the primary-key property stays aligned
+  // with whatever field the caller picked from their `InputRecord`.
+  const primaryKeySchema: z.ZodType<InputRecord[PrimaryKeyName]> = z.any();
+  // TypeScript widens computed keys to `string`, so we cast the object literal to reconnect the literal
+  // names to the corresponding Zod schemas. Without this, inference would lose the strong key mapping.
+  const shape = {
+    [primaryKeyName]: primaryKeySchema,
+    [outputKey]: outputSchema,
+  } as Record<PrimaryKeyName | OutputName, z.ZodTypeAny>;
+
+  return z.object(shape).strict() as z.ZodType<
+    ResponseRow<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+  >;
+};
+
+// Builds the full success response schema that we use for runtime validation of Nuabase responses.
+const createNuaApiResponseCastArray: NuaApiResponseCastArrayBuilder = <
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  InputRecord extends Record<UserDataPKValue, unknown>,
+  PrimaryKeyName extends keyof InputRecord,
+>(
+  primaryKeyName: PrimaryKeyName,
+  outputKey: OutputName,
+  outputSchema: OutputZodSchema
+) => {
   const recordSchema = zs_ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>(
     primaryKeyName,
     outputKey,
     outputSchema
   );
-  const dataSchema = z.array(recordSchema) as z.ZodType<
-    Array<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>
-  >;
+  const dataSchema = z.array(recordSchema);
 
   return z
     .object({
@@ -83,7 +97,22 @@ export const zs_NuaApiResponse_CastArray = <
       isSuccess: z.literal(true),
       isError: z.optional(z.literal(false)),
     })
-    .strict() as z.ZodType<
-    NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
-  >;
+    .strict();
 };
+
+// We expose both the schema (for runtime parsing) and a derived TS type (for developer ergonomics).
+// Callers should validate with this schema and annotate their variables with `NuaApiResponse_CastArray`.
+export const zs_NuaApiResponse_CastArray = createNuaApiResponseCastArray;
+
+// `z.infer` keeps the TypeScript response type in lock-step with the Zod schema above.
+// Client code imports this alias so that runtime parsing (via Zod) and static typing never drift apart.
+export type NuaApiResponse_CastArray<
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  InputRecord extends Record<UserDataPKValue, unknown>,
+  PrimaryKeyName extends keyof InputRecord,
+> = z.infer<
+  ReturnType<
+    typeof zs_NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+  >
+>;
