@@ -21,7 +21,9 @@ export type ArrayFnResult<
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
-> = NuabaseError | NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
+> =
+  | NuabaseError
+  | NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
 
 export type ArrayFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
   <InputRecord extends Record<string, unknown>, PrimaryKeyName extends keyof InputRecord & string>(

@@ -61,13 +61,14 @@ export const zs_NuaApiResponse_CastArray = <
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-  const recordSchema = zs_ResponseRecord<
-    OutputZodSchema,
-    OutputName,
-    InputRecord,
-    PrimaryKeyName
-  >(primaryKeyName, outputKey, outputSchema);
+): z.ZodType<
+  NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+> => {
+  const recordSchema = zs_ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>(
+    primaryKeyName,
+    outputKey,
+    outputSchema
+  );
   const dataSchema = z.array(recordSchema) as z.ZodType<
     Array<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>
   >;
