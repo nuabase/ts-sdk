@@ -1,6 +1,6 @@
 import { NuabaseAPIClient, NuabaseConfig } from '../lib/api-client';
-import { createArrayFn } from './array/factory';
-import { ArrayFn, ArrayFnDef } from './array/types';
+import { createArrayFn } from './cast_array/factory';
+import { ArrayFn, ArrayFnDef } from './cast_array/types';
 import { z } from 'zod';
 
 export class Nua {

@@ -1,4 +1,4 @@
 export { Nua } from './core';
-export { createArrayFn } from './array/factory';
-export { validateArrayRequestParams } from './array/request-validation';
-export type { ArrayFn, ArrayFnDef } from './array/types';
+export { createArrayFn } from './cast_array/factory';
+export { validateArrayRequestParams } from './cast_array/request-validation';
+export type { ArrayFn, ArrayFnDef } from './cast_array/types';
