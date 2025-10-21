@@ -37,44 +37,13 @@ const zs_ArrayResponseRecord = <
 
 // NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
 // see the zodSchema below
-type SuccessData_Array<
-  OutputZodSchema extends z.ZodTypeAny,
-  OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
-> = Array<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
-
-const zs_SuccessData_Array = <
-  OutputZodSchema extends z.ZodTypeAny,
-  OutputName extends string,
-  InputRecord extends Record<string, unknown>,
-  PrimaryKeyName extends keyof InputRecord & string,
->(
-  primaryKeyName: PrimaryKeyName,
-  outputKey: OutputName,
-  outputSchema: OutputZodSchema
-): z.ZodType<SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-  const recordSchema = zs_ArrayResponseRecord<
-    OutputZodSchema,
-    OutputName,
-    InputRecord,
-    PrimaryKeyName
-  >(primaryKeyName, outputKey, outputSchema);
-
-  return z.array(recordSchema) as z.ZodType<
-    SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
-  >;
-};
-
-// NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
-// see the zodSchema below
 export type SuccessResponse_Array<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
 > = {
-  data: SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
+  data: Array<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
   cacheHits: number;
   llmRequestId: string;
   kind: 'cast/array';
@@ -93,11 +62,15 @@ export const zs_SuccessResponse_Array = <
   outputKey: OutputName,
   outputSchema: OutputZodSchema
 ): z.ZodType<SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-  const dataSchema = zs_SuccessData_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>(
-    primaryKeyName,
-    outputKey,
-    outputSchema
-  );
+  const recordSchema = zs_ArrayResponseRecord<
+    OutputZodSchema,
+    OutputName,
+    InputRecord,
+    PrimaryKeyName
+  >(primaryKeyName, outputKey, outputSchema);
+  const dataSchema = z.array(recordSchema) as z.ZodType<
+    Array<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>
+  >;
 
   return z
     .object({
