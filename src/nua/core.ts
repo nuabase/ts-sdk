@@ -1,10 +1,7 @@
 import { NuabaseAPIClient, NuabaseConfig } from '../lib/api-client';
-import {
-  ArrayFn,
-  ArrayFnDef,
-  createArrayFn,
-  validateArrayRequestParams,
-} from './array/create-array-fn';
+import { createArrayFn } from './array/factory';
+import { validateArrayRequestParams } from './array/request-validation';
+import { ArrayFn, ArrayFnDef } from './array/types';
 import { z } from 'zod';
 
 export class Nua {
