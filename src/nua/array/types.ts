@@ -1,5 +1,5 @@
 import { NuabaseError } from '../../lib/error-response';
-import type { SuccessResponse_Array } from './response-schema';
+import type { NuaApiResponse_CastArray } from './response-schema';
 import { z } from 'zod';
 
 // Generic glossary:
@@ -21,7 +21,7 @@ export type ArrayFnResult<
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
-> = NuabaseError | SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
+> = NuabaseError | NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>;
 
 export type ArrayFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
   <InputRecord extends Record<string, unknown>, PrimaryKeyName extends keyof InputRecord & string>(

@@ -1,6 +1,6 @@
 import { NuabaseAPIClient } from '../../lib/api-client';
 import { validateArrayRequestParams } from './request-validation';
-import { zs_SuccessResponse_Array } from './response-schema';
+import { zs_NuaApiResponse_CastArray } from './response-schema';
 import { ArrayFn, ArrayFnDef, ArrayFnResult } from './types';
 import { z } from 'zod';
 
@@ -50,7 +50,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
       return { error: String(response.error), isError: true };
 
     const outputKey = fnDef.output.name;
-    const successSchema = zs_SuccessResponse_Array<
+    const successSchema = zs_NuaApiResponse_CastArray<
       OutputZodSchema,
       OutputName,
       InputRecord,

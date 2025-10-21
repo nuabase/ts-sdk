@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
 // see the zodSchema below
-type ArrayResponseRecord<
+type ResponseRecord<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -13,7 +13,7 @@ type ArrayResponseRecord<
     : z.infer<OutputZodSchema>;
 };
 
-const zs_ArrayResponseRecord = <
+const zs_ResponseRecord = <
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -22,7 +22,7 @@ const zs_ArrayResponseRecord = <
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+): z.ZodType<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
   const primaryKeySchema = z.any() as z.ZodType<InputRecord[PrimaryKeyName]>;
 
   return z
@@ -31,19 +31,19 @@ const zs_ArrayResponseRecord = <
       [outputKey]: outputSchema,
     } as Record<PrimaryKeyName | OutputName, z.ZodTypeAny>)
     .strict() as z.ZodType<
-    ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+    ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
   >;
 };
 
 // NOTE: this type definition must match the equivalent zod schema we manually create (used for validation)
 // see the zodSchema below
-export type SuccessResponse_Array<
+export type NuaApiResponse_CastArray<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends keyof InputRecord & string,
 > = {
-  data: Array<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
+  data: Array<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>;
   cacheHits: number;
   llmRequestId: string;
   kind: 'cast/array';
@@ -52,7 +52,7 @@ export type SuccessResponse_Array<
   isError?: false;
 };
 
-export const zs_SuccessResponse_Array = <
+export const zs_NuaApiResponse_CastArray = <
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
   InputRecord extends Record<string, unknown>,
@@ -61,15 +61,15 @@ export const zs_SuccessResponse_Array = <
   primaryKeyName: PrimaryKeyName,
   outputKey: OutputName,
   outputSchema: OutputZodSchema
-): z.ZodType<SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
-  const recordSchema = zs_ArrayResponseRecord<
+): z.ZodType<NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>> => {
+  const recordSchema = zs_ResponseRecord<
     OutputZodSchema,
     OutputName,
     InputRecord,
     PrimaryKeyName
   >(primaryKeyName, outputKey, outputSchema);
   const dataSchema = z.array(recordSchema) as z.ZodType<
-    Array<ArrayResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>
+    Array<ResponseRecord<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>>
   >;
 
   return z
@@ -83,6 +83,6 @@ export const zs_SuccessResponse_Array = <
       isError: z.optional(z.literal(false)),
     })
     .strict() as z.ZodType<
-    SuccessResponse_Array<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
+    NuaApiResponse_CastArray<OutputZodSchema, OutputName, InputRecord, PrimaryKeyName>
   >;
 };
