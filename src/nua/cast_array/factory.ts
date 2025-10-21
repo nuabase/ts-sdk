@@ -4,7 +4,7 @@ import { zs_NuaApiResponse_CastArray } from './response-schema';
 import { ArrayFn, ArrayFnDef, ArrayFnResult } from './types';
 import { z } from 'zod';
 
-const buildArrayRequest = <
+const toCastArrayApiRequest = <
   InputRecord extends Record<string, unknown>,
   PrimaryKeyName extends string,
 >(
@@ -43,7 +43,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
 
     const response = await client.request(
       path,
-      buildArrayRequest(fnDef.prompt, data, primaryKeyName, fnDef.output.name, outputJsonSchema)
+      toCastArrayApiRequest(fnDef.prompt, data, primaryKeyName, fnDef.output.name, outputJsonSchema)
     );
 
     if (response && typeof response === 'object' && 'error' in response)
