@@ -1,5 +1,83 @@
+import { randomUUID } from 'node:crypto';
 import { Nua } from './nua';
+import { EventSource, ErrorEvent as EventSourceErrorEvent } from 'eventsource';
 import z from 'zod';
+
+const processedSchema = z.object({
+  processed_id: z.string(),
+});
+
+const sseResponseSchema = z
+  .object({
+    isSuccess: z.literal(true),
+    llmRequestId: z.string(),
+    kind: z.literal('cast/value'),
+    data: z.unknown(),
+    isCacheHit: z.boolean().optional(),
+  })
+  .passthrough();
+
+const waitForSuccessfulSseMessage = async (sseUrl: string, timeoutMs = 30000) => {
+  const eventSource = new EventSource(sseUrl);
+
+  return await new Promise<Record<string, unknown>>((resolve, reject) => {
+    const handleMessage = (event: MessageEvent<string>) => {
+      const rawData = event.data;
+      if (typeof rawData !== 'string' || rawData.length === 0) return;
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(rawData);
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error('Unable to parse SSE payload'));
+        cleanup();
+        return;
+      }
+
+      if (!parsed || typeof parsed !== 'object') return;
+
+      const payload = parsed as Record<string, unknown>;
+      if (payload['isError'] === true) {
+        cleanup();
+        const message =
+          typeof payload['error'] === 'string'
+            ? payload['error']
+            : 'SSE stream returned an error payload';
+        reject(new Error(message));
+        return;
+      }
+
+      if (payload['isSuccess'] === true) {
+        cleanup();
+        resolve(payload);
+      }
+    };
+
+    const handleError = (event: EventSourceErrorEvent) => {
+      cleanup();
+      const message =
+        (event && typeof event.message === 'string' && event.message.length > 0
+          ? event.message
+          : event.type) || 'unknown error';
+      reject(new Error(`SSE stream error: ${message}`));
+    };
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      eventSource.removeEventListener('message', handleMessage);
+      eventSource.removeEventListener('error', handleError);
+      eventSource.close();
+    };
+
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timed out while waiting for SSE result'));
+    }, timeoutMs);
+
+    eventSource.addEventListener('message', handleMessage);
+    eventSource.addEventListener('error', handleError);
+  });
+};
 
 describe('cast/array', () => {
   test('basic response shape validation', async () => {
@@ -90,4 +168,34 @@ Australia`;
     console.log(JSON.stringify(response, null, 2), 'JSON.stringify(response, null, 2)');
     expect(response).toBeTruthy();
   });
+});
+
+describe('sse streaming', () => {
+  test('queued SSE request resolves to expected processed payload', async () => {
+    const nua = new Nua();
+
+    const echoQueuedId = nua.createFn({
+      prompt:
+        'You will receive a UUID. Respond only with JSON that matches the schema. Use the provided UUID verbatim in the processed_id field.',
+      output: {
+        name: 'processed',
+        schema: processedSchema,
+      },
+    });
+
+    const originalId = randomUUID();
+    const queuedResult = await echoQueuedId(originalId);
+
+    if ('isError' in queuedResult) {
+      throw new Error(`Error enqueuing SSE request: ${queuedResult.error}`);
+    }
+
+    const streamedPayload = await waitForSuccessfulSseMessage(queuedResult.sseUrl);
+    const parsedStream = sseResponseSchema.parse(streamedPayload);
+
+    expect(parsedStream.llmRequestId).toBe(queuedResult.id);
+
+    const processed = processedSchema.parse(parsedStream.data);
+    expect(processed.processed_id).toBe(originalId);
+  }, 8000);
 });
