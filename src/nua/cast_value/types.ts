@@ -1,4 +1,5 @@
 import { NuabaseError } from '../../lib/error-response';
+import { NuaQueuedResponse } from '../common/queued-response';
 import { NuaApiResponse_CastValue } from './response-schema';
 import { z } from 'zod';
 
@@ -14,8 +15,10 @@ export type ValueFnResult<OutputZodSchema extends z.ZodTypeAny, OutputName exten
   | NuabaseError
   | NuaApiResponse_CastValue<OutputZodSchema, OutputName>;
 
-// The generic constraint on `InputRecord` ensures every supplied row includes the primary key property.
+export type ValueFnQueuedResult = NuabaseError | NuaQueuedResponse;
+
+// Base invocation returns queued SSE metadata; `.now` resolves with the final cast response.
 export type ValueFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
-  (data: unknown): Promise<ValueFnResult<OutputZodSchema, OutputName>>;
+  (data: unknown): Promise<ValueFnQueuedResult>;
   now: (data: unknown) => Promise<ValueFnResult<OutputZodSchema, OutputName>>;
 };
