@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { Nua } from '../nua';
 import { processedSchema, sseResponseSchema, waitForSuccessfulSseMessage } from './utils/sse';
 
@@ -15,7 +14,9 @@ describe('sse streaming', () => {
       },
     });
 
-    const originalId = randomUUID();
+    // We'll use a stable value so this hits the cache rather than go thru an LLM everytime.
+    // For cache busting actual LLM calls, we'll do separate tests.
+    const originalId = 'eyJ0eXAiOiJKV1QiLC';
     const queuedResult = await echoQueuedId(originalId);
 
     if ('isError' in queuedResult) {
@@ -29,5 +30,5 @@ describe('sse streaming', () => {
 
     const processed = processedSchema.parse(parsedStream.data);
     expect(processed.processed_id).toBe(originalId);
-  }, 60000);
+  }, 3000);
 });
