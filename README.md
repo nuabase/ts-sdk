@@ -1,19 +1,20 @@
-# Nuabase TypeScript client
+## Nuabase TypeScript SDK
 
-Nuabase turns LLM prompts into type-safe functions in under five lines.
+Nuabase turns LLM prompts into type-safe functions in under five lines of code. Set up your free account now at [Nuabase](https://nuabase.com).
+
+With Nuabase, you write a prompt, specify the output schema, and get back a well-typed function. You can invoke it with input data, like any other code in your application, and receive data that matches the exact schema you specified.
 
 Example use-cases:
+
+* Provide free-form text input for faster filling of complex HTML forms
 * Enrich a list of food items with nutrition facts
 * Tag sales leads with more details about the company
-* Convert free-form instructions into precise order forms—directly inside your application.
 
-You can describe the transformation once, and get back a well-typed function, and call it like any other code in your application.
+Behind the scenes, Nuabase runs the LLM transformation as async jobs, and once ready, call your server API with the results using Webhooks. It can also stream the result directly to your front-end using SSE. You can also see all requests and responses as they happen in the [Nuabase Console](https://console.nuabase.com). All outputs are guaranteed to match the schema you specified.
 
-You don't have to do any custom custom orchestration, or run polling, or schema validation.
+One major reason I built Nuabase is the need for granular, row-level caching. For example, let's say you want to classify your bank transaction entries, and map them to your chart of accounts. With Nuabase's row-level caching, it will only send new entries to the LLM. Any specific entry that it has seen before will be returned from the cache. This also means you can make LLM requests multiple times with identical values, and after the first time, they will return immediately without needing to go through the LLM.
 
-Behind the scenes, Nuabase runs the async jobs, SSE streaming, webhooks, logging, caching, cost attribution, and strict JSON-schema enforcement. You also get an observability dashboard for every request so you always know what the LLM produced.
-
-## At a Glance
+## Usage at a glance
 
 **1. Input.** Start with the data you want to send to the LLM:
 
