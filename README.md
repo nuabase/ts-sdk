@@ -6,9 +6,9 @@ With Nuabase, you write a prompt, specify the output schema, and get back a well
 
 Example use-cases:
 
-* Provide free-form text input for faster filling of complex HTML forms
-* Enrich a list of food items with nutrition facts
-* Tag sales leads with more details about the company
+- Provide free-form text input for faster filling of complex HTML forms
+- Enrich a list of food items with nutrition facts
+- Tag sales leads with more details about the company
 
 Behind the scenes, Nuabase runs the LLM transformation as async jobs, and once ready, call your server API with the results using Webhooks. It can also stream the result directly to your front-end using SSE. You can also see all requests and responses as they happen in the [Nuabase Console](https://console.nuabase.com). All outputs are guaranteed to match the schema you specified.
 
@@ -19,9 +19,7 @@ One major reason I built Nuabase is the need for granular, row-level caching. Fo
 **1. Input.** Start with the data you want to send to the LLM:
 
 ```ts
-const leads = [
-  { id: 'lead-101', notes: 'Growth-stage SaaS, ~80 employees, wants a demo.' },
-];
+const leads = [{ id: 'lead-101', notes: 'Growth-stage SaaS, ~80 employees, wants a demo.' }];
 ```
 
 **2. Desired shape.** Describe the structure you expect back:
@@ -36,10 +34,12 @@ const LeadInsights = z.object({
 **3. Declare the prompt.** Turn it into a typed function:
 
 ```ts
-const classifyLeads = new Nua().map({
-  name: 'insights',
-  output: LeadInsights,
+const classifyLeads = new Nua().createArrayFn({
   prompt: 'Classify each lead with industry and company_size bucket.',
+  output: {
+    name: 'leadInsights',
+    schema: LeadInsights,
+  },
 });
 ```
 
@@ -79,11 +79,13 @@ const LeadInsights = z.object({
   recommended_follow_up: z.enum(['Call', 'Email', 'Event']),
 });
 
-const enrichLeads = nua.map({
-  name: 'leadInsights',
-  output: LeadInsights,
+const enrichLeads = nua.createArrayFn({
   prompt:
     'Summarize each inbound lead by extracting company_name, industry, company_size bucket (SMB, Mid-market, Enterprise), and the recommended_follow_up channel (Call, Email, or Event) based on their notes.',
+  output: {
+    name: 'leadInsights',
+    schema: LeadInsights,
+  },
 });
 
 const rows = [
