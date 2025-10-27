@@ -2,7 +2,13 @@ import { NuabaseAPIClient } from '../../lib/api-client';
 import { zs_NuaQueuedResponse } from '../common/queued-response';
 import { validateArrayRequestParams } from './request-validation';
 import { PrimaryKeyedInputRecord, zs_NuaApiResponse_CastArray } from './response-schema';
-import { ArrayFn, ArrayFnDef, ArrayFnQueuedResult, ArrayFnResult } from './types';
+import {
+  ArrayFn,
+  ArrayFnDef,
+  ArrayFnQueuedResult,
+  ArrayFnResult,
+  validateArrayFnDef,
+} from './types';
 import { z } from 'zod';
 
 // Keep the request payload typed so every record includes the primary key we send to the API.
@@ -27,13 +33,13 @@ const toCastArrayApiRequest = <
   },
 });
 
-// TODO: We must parse incoming fnDef using Zod, at runtime, because this library can be used from untyped JavaScript.
-// Currently we're doing validation of only input data (checking if its array and has primary key in all row),
-// but we need to check the whole shape of the incoming data.
 export const createArrayFn = <OutputName extends string, OutputZodSchema extends z.ZodTypeAny>(
   client: NuabaseAPIClient,
-  fnDef: ArrayFnDef<OutputName, OutputZodSchema>
+  inputFnDef: ArrayFnDef<OutputName, OutputZodSchema>
 ): ArrayFn<OutputZodSchema, OutputName> => {
+  // Validate at runtime to guard JavaScript consumers; remember to keep this aligned with the TS type definition.
+  const fnDef = validateArrayFnDef(inputFnDef);
+
   const outputJsonSchema = z.toJSONSchema(fnDef.output.schema);
 
   const toNuabaseError = (response: unknown) => {

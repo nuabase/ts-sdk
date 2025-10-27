@@ -1,7 +1,13 @@
 import { NuabaseAPIClient } from '../../lib/api-client';
 import { zs_NuaQueuedResponse } from '../common/queued-response';
 import { zs_NuaApiResponse_CastValue } from './response-schema';
-import { ValueFn, ValueFnDef, ValueFnQueuedResult, ValueFnResult } from './types';
+import {
+  validateValueFnDef,
+  ValueFn,
+  ValueFnDef,
+  ValueFnQueuedResult,
+  ValueFnResult,
+} from './types';
 import { z } from 'zod';
 
 // Keep the request payload typed so every record includes the primary key we send to the API.
@@ -21,11 +27,14 @@ const toCastValueApiRequest = (
   },
 });
 
-// TODO: We must parse incoming fnDef using Zod, at runtime, because this library can be used from untyped JavaScript.
 export const createValueFn = <OutputName extends string, OutputZodSchema extends z.ZodTypeAny>(
   client: NuabaseAPIClient,
-  fnDef: ValueFnDef<OutputName, OutputZodSchema>
+  inputFnDef: ValueFnDef<OutputName, OutputZodSchema>
 ): ValueFn<OutputZodSchema, OutputName> => {
+  // Validate at runtime to guard JavaScript consumers; remember to keep this aligned with the TS type definition.
+  const fnDef = validateValueFnDef(inputFnDef);
+
+  // From here we rely on the validated definition to drive request construction and parsing.
   const outputJsonSchema = z.toJSONSchema(fnDef.output.schema);
 
   const toNuabaseError = (response: unknown) => {
