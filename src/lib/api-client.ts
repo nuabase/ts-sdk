@@ -1,3 +1,4 @@
+import { resolveConfigValue } from './env';
 import { NuabaseError, parseErrorResponse } from './error-response';
 import { getErrorMessageFromException } from './error-utils';
 
@@ -11,8 +12,8 @@ export class NuabaseAPIClient {
   private readonly baseUrl: string;
 
   constructor(config: NuabaseConfig = {}) {
-    this.apiKey = config.apiKey || process.env.NUABASE_API_KEY || '';
-    this.baseUrl = config.baseUrl || process.env.NUABASE_API_URL || 'https://api.nuabase.com';
+    this.apiKey = resolveConfigValue(config, 'apiKey', 'NUABASE_API_KEY') || '';
+    this.baseUrl = resolveConfigValue(config, 'baseUrl', 'NUABASE_API_URL') || 'https://api.nuabase.com';
 
     if (!this.apiKey) {
       throw new Error(
