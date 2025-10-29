@@ -13,7 +13,8 @@ export class NuabaseAPIClient {
 
   constructor(config: NuabaseConfig = {}) {
     this.apiKey = resolveConfigValue(config, 'apiKey', 'NUABASE_API_KEY') || '';
-    this.baseUrl = resolveConfigValue(config, 'baseUrl', 'NUABASE_API_URL') || 'https://api.nuabase.com';
+    this.baseUrl =
+      resolveConfigValue(config, 'baseUrl', 'NUABASE_API_URL') || 'https://api.nuabase.com';
 
     if (!this.apiKey) {
       throw new Error(

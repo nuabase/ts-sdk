@@ -8,7 +8,7 @@ export function resolveConfigValue<T extends Record<string, any>>(
 
   // 2. Node env fallback
   const pe = (globalThis as any).process;
-  const isNode = !!(pe?.versions?.node);
+  const isNode = !!pe?.versions?.node;
   if (isNode) {
     return pe?.env?.[envVar];
   }
