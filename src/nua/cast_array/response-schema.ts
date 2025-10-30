@@ -33,7 +33,7 @@ type NuaApiResponseShape<
   kind: 'cast/array';
   data: Array<ResponseRow<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>>;
   cacheHits: number;
-  rowsWithNoResults: string[];
+  rowsWithNoResults: UserDataPKValue[];
   isSuccess: true;
   isError?: false;
 };
