@@ -64,7 +64,12 @@ type CastArraySuccessRowWithSource<
   OutputName extends string,
   PrimaryKeyName extends string,
   InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
-> = CastArraySuccessFromApi<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>['data'][number] &
+> = CastArraySuccessFromApi<
+  OutputZodSchema,
+  OutputName,
+  PrimaryKeyName,
+  InputRecord
+>['data'][number] &
   CastArraySourceRowAugmentation<PrimaryKeyName, InputRecord>;
 
 export type CastArraySuccessWithSource<
@@ -79,12 +84,7 @@ export type CastArraySuccessWithSource<
   /**
    * Each row mirrors the API payload and includes the SDK-provided `sourceRow`.
    */
-  data: CastArraySuccessRowWithSource<
-    OutputZodSchema,
-    OutputName,
-    PrimaryKeyName,
-    InputRecord
-  >[];
+  data: CastArraySuccessRowWithSource<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>[];
 };
 
 export type ArrayFnResult<

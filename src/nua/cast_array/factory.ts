@@ -32,9 +32,7 @@ function addOriginalInputRows<
   OutputValue,
 >(
   inputRows: InputRecord[],
-  outputRows: Array<
-    CastArrayResponseRow<PrimaryKeyName, InputRecord, OutputName, OutputValue>
-  >,
+  outputRows: Array<CastArrayResponseRow<PrimaryKeyName, InputRecord, OutputName, OutputValue>>,
   primaryKeyName: PrimaryKeyName
 ): Array<
   CastArrayResponseRow<PrimaryKeyName, InputRecord, OutputName, OutputValue> & {
@@ -179,12 +177,11 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
       isSuccess: true,
       llmRequestId: parsedResponse.data.llmRequestId,
       kind: parsedResponse.data.kind,
-      data: addOriginalInputRows<
-        PrimaryKeyName,
-        InputRecord,
-        OutputName,
-        z.infer<OutputZodSchema>
-      >(data, parsedResponse.data.data, primaryKeyName),
+      data: addOriginalInputRows<PrimaryKeyName, InputRecord, OutputName, z.infer<OutputZodSchema>>(
+        data,
+        parsedResponse.data.data,
+        primaryKeyName
+      ),
       rowsWithNoResults: parsedResponse.data.rowsWithNoResults,
       cacheHits: parsedResponse.data.cacheHits,
     };
