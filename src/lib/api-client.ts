@@ -23,19 +23,30 @@ export class NuabaseAPIClient {
     }
   }
 
-  async request(urlPath: string, params: object): Promise<NuabaseError | unknown> {
+  async request(
+    method: 'GET' | 'POST',
+    urlPath: string,
+    params?: object
+  ): Promise<NuabaseError | unknown> {
     const url = `${this.baseUrl}/${urlPath}`;
 
     let response: Response;
 
+    const hasBody = method !== 'GET' && params !== undefined;
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+    };
+
+    if (hasBody) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     try {
       response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(params),
+        method,
+        headers,
+        body: hasBody ? JSON.stringify(params) : undefined,
       });
     } catch (e) {
       return { error: `Error calling Nuabase API: ${getErrorMessageFromException(e)}` };

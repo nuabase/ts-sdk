@@ -114,6 +114,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
     validateArrayRequestParams(data, primaryKeyName);
 
     const response = await client.request(
+      'POST',
       'cast/array',
       toCastArrayApiRequest<PrimaryKeyName, InputRecord>(
         fnDef.prompt,
@@ -146,6 +147,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
     validateArrayRequestParams(data, primaryKeyName);
 
     const response = await client.request(
+      'POST',
       'cast/array/now',
       toCastArrayApiRequest<PrimaryKeyName, InputRecord>(
         fnDef.prompt,

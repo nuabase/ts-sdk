@@ -42,6 +42,51 @@ export const validateArrayFnDef = <OutputName extends string, OutputZodSchema ex
   return parsed.data as ArrayFnDef<OutputName, OutputZodSchema>;
 };
 
+type CastArraySuccessFromApi<
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  PrimaryKeyName extends string,
+  InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
+> = NuaApiResponse_CastArray<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>;
+
+type CastArraySourceRowAugmentation<
+  PrimaryKeyName extends string,
+  InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
+> = {
+  /**
+   * SDK-added field containing the full input row for convenience; not returned by the API.
+   */
+  sourceRow: InputRecord;
+};
+
+type CastArraySuccessRowWithSource<
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  PrimaryKeyName extends string,
+  InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
+> = CastArraySuccessFromApi<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>['data'][number] &
+  CastArraySourceRowAugmentation<PrimaryKeyName, InputRecord>;
+
+export type CastArraySuccessWithSource<
+  OutputZodSchema extends z.ZodTypeAny,
+  OutputName extends string,
+  PrimaryKeyName extends string,
+  InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
+> = Omit<
+  CastArraySuccessFromApi<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>,
+  'data'
+> & {
+  /**
+   * Each row mirrors the API payload and includes the SDK-provided `sourceRow`.
+   */
+  data: CastArraySuccessRowWithSource<
+    OutputZodSchema,
+    OutputName,
+    PrimaryKeyName,
+    InputRecord
+  >[];
+};
+
 export type ArrayFnResult<
   OutputZodSchema extends z.ZodTypeAny,
   OutputName extends string,
@@ -49,7 +94,7 @@ export type ArrayFnResult<
   InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
 > =
   | NuabaseError
-  | NuaApiResponse_CastArray<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>;
+  | CastArraySuccessWithSource<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>;
 
 export type ArrayFnQueuedResult = NuabaseError | NuaQueuedResponse;
 

@@ -45,6 +45,7 @@ export const createValueFn = <OutputName extends string, OutputZodSchema extends
 
   const sendRequest = async (path: 'cast/value' | 'cast/value/now', data: unknown) =>
     client.request(
+      'POST',
       path,
       toCastValueApiRequest(fnDef.prompt, data, fnDef.output.name, outputJsonSchema)
     );

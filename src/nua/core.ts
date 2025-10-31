@@ -3,6 +3,7 @@ import { createArrayFn } from './cast_array/factory';
 import { ArrayFn, ArrayFnDef } from './cast_array/types';
 import { createValueFn } from './cast_value/factory';
 import { ValueFn, ValueFnDef } from './cast_value/types';
+import { getRequest, GetRequestResult } from './get-request';
 import { z } from 'zod';
 
 export class Nua {
@@ -22,5 +23,9 @@ export class Nua {
     fnDef: ValueFnDef<OutputName, OutputZodSchema>
   ): ValueFn<OutputZodSchema, OutputName> {
     return createValueFn(this.apiClient, fnDef);
+  }
+
+  async getRequest(llmRequestId: string): Promise<GetRequestResult> {
+    return getRequest(this.apiClient, llmRequestId);
   }
 }
