@@ -38,7 +38,7 @@ describe('cast/array', () => {
     expect(result).toHaveLength(3);
 
     result.forEach((entry, index) => {
-      expect(Object.keys(entry).sort()).toEqual(['foodItem', 'sourceRow', 'id']);
+      expect(Object.keys(entry).sort()).toEqual(['foodItem', 'id', 'sourceRow']);
 
       const parsedFoodItem = FoodItemSchema.safeParse(entry.foodItem);
       expect(parsedFoodItem.success).toBe(true);
