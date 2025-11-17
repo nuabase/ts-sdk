@@ -184,6 +184,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
       ),
       rowsWithNoResults: parsedResponse.data.rowsWithNoResults,
       cacheHits: parsedResponse.data.cacheHits,
+      usage: parsedResponse.data.usage,
     };
   };
 

@@ -48,4 +48,45 @@ describe('cast/array', () => {
       }
     });
   });
+
+  test('usage field validation in success response', async () => {
+    // Expected usage: {"promptTokens": 384, "completionTokens": 148, "totalTokens": 532}
+    const nua = new Nua();
+
+    const NumberSchema = z.number();
+
+    const returnDoubleValue = nua.createArrayFn({
+      prompt: 'Return double the value of the input number',
+      output: {
+        name: 'doubled',
+        schema: NumberSchema,
+      },
+    });
+
+    const inputData = [
+      { id: 1, value: 5 },
+      { id: 2, value: 10 },
+    ];
+
+    const response = await returnDoubleValue.now(inputData, 'id');
+
+    if (response.isError) throw new Error(`error in api response: ${response.error}`);
+
+    expect(response.isSuccess).toBe(true);
+    expect(response.usage).toBeDefined();
+
+    /*
+    Depending on the LLM, these values vary widely, so we cast a wide net.
+    The numbers have to be essentially non-zero and fall inside a big enough bucket.
+    */
+    expect(response.usage.promptTokens).toBeGreaterThanOrEqual(30);
+    expect(response.usage.promptTokens).toBeLessThanOrEqual(500);
+    expect(response.usage.completionTokens).toBeGreaterThanOrEqual(30);
+    expect(response.usage.completionTokens).toBeLessThanOrEqual(500);
+    expect(response.usage.totalTokens).toBeGreaterThanOrEqual(30);
+    expect(response.usage.totalTokens).toBeLessThanOrEqual(700);
+    expect(response.usage.totalTokens).toBe(
+      response.usage.promptTokens + response.usage.completionTokens
+    );
+  });
 });

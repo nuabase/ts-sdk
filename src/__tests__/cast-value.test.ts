@@ -35,4 +35,40 @@ Australia`;
     if (response.isError) throw new Error(`error in api response: ${response.error}`);
     expect(response).toBeTruthy();
   });
+
+  test('usage field validation in success response', async () => {
+    // Expected usage: {"promptTokens": 224, "completionTokens": 54, "totalTokens": 278}
+    const nua = new Nua();
+
+    const NumberSchema = z.number();
+
+    const returnTheNumberTen = nua.createFn({
+      prompt: 'Return the number 10',
+      output: {
+        name: 'result',
+        schema: NumberSchema,
+      },
+    });
+
+    const response = await returnTheNumberTen.now(null);
+
+    if (response.isError) throw new Error(`error in api response: ${response.error}`);
+
+    expect(response.isSuccess).toBe(true);
+    expect(response.usage).toBeDefined();
+
+    /*
+    Depending on the LLM, these values vary widely, so we cast a wide net.
+    The numbers have to be essentially non-zero and fall inside a big enough bucket.
+    */
+    expect(response.usage.promptTokens).toBeGreaterThanOrEqual(30);
+    expect(response.usage.promptTokens).toBeLessThanOrEqual(500);
+    expect(response.usage.completionTokens).toBeGreaterThanOrEqual(30);
+    expect(response.usage.completionTokens).toBeLessThanOrEqual(500);
+    expect(response.usage.totalTokens).toBeGreaterThanOrEqual(30);
+    expect(response.usage.totalTokens).toBeLessThanOrEqual(500);
+    expect(response.usage.totalTokens).toBe(
+      response.usage.promptTokens + response.usage.completionTokens
+    );
+  });
 });

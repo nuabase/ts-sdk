@@ -87,6 +87,7 @@ export const createValueFn = <OutputName extends string, OutputZodSchema extends
       kind: parsedResponse.data.kind,
       data: parsedResponse.data.data,
       isCacheHit: parsedResponse.data.isCacheHit,
+      usage: parsedResponse.data.usage,
     };
   };
 
