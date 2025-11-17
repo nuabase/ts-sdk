@@ -46,9 +46,9 @@ const classifyLeads = new Nua().createArrayFn({
 **4. Invoke.** Call it like any other async function:
 
 ```ts
-const result = await classifyLeads.now(leads, 'id');
+const result = await classifyLeads(leads, 'id');
 if (result.isError) throw new Error(result.error);
-console.log(result.data[0].insights);
+console.log(result.data[0].leadInsights);
 // -> { industry: 'Software', company_size: 'Mid-market' }
 ```
 
@@ -107,34 +107,35 @@ const rows = [
   },
 ];
 
-const response = await enrichLeads.now(rows, 'leadId'); // `leadId` is the primary key field
+const response = await enrichLeads(rows, 'leadId'); // `leadId` is the primary key field
 
 if (response.isError) {
   console.error(response.error);
   return;
 }
 
-response.data.forEach(({ id, leadInsights }) => {
+response.data.forEach(({ leadId, leadInsights }) => {
   // leadInsights satisfies the LeadInsights schema
-  console.log(id, leadInsights.company_name, leadInsights.industry, leadInsights.company_size);
+  console.log(leadId, leadInsights.company_name, leadInsights.industry, leadInsights.company_size);
 });
 
 console.log(response.data);
 // -> [
 //   {
-//     id: 'lead-101',
+//     leadId: 'lead-101',
 //     leadInsights: {
 //       company_name: 'Acme Analytics',
 //       industry: 'Software',
 //       company_size: 'Mid-market',
 //       recommended_follow_up: 'Call',
 //     },
+//     sourceRow: { leadId: 'lead-101', name: 'Acme Analytics', notes: '...' },
 //   },
 //   // ...
 // ];
 ```
 
-`map(data, primaryKey)` submits an asynchronous mapping job. But `map.now(data, primaryKey)` is immediate — it waits for completion and returns the full result.
+The default invocation waits for completion and returns the full result. Use `.queue(data, primaryKey)` to submit an asynchronous job and receive streaming updates via SSE.
 
 ## Why Nuabase
 
@@ -149,14 +150,15 @@ Every call returns a discriminated union. When `isError` is `true`, you get a fl
 
 **Success**
 
-| Field               | Type                                                                     | Description                                                                 |
-| ------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `isSuccess`         | `true`                                                                   | Indicates that the request completed successfully.                          |
-| `data`              | `Array<{ [primaryKey]: unknown; [outputName]: z.infer<typeof output> }>` | Rows that merged the original primary key with the validated schema output. |
-| `llmRequestId`      | `string`                                                                 | Unique identifier for tracing each Nuabase LLM execution.                   |
-| `cacheHits`         | `number`                                                                 | Count of input rows served from Nuabase response cache.                     |
-| `rowsWithNoResults` | `string[]`                                                               | Primary keys that could not be resolved by the model.                       |
-| `isError`           | `false \| undefined`                                                     | Absent on success; included for type narrowing.                             |
+| Field               | Type                                                                                           | Description                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `isSuccess`         | `true`                                                                                         | Indicates that the request completed successfully.                                                                           |
+| `data`              | `Array<{ [primaryKey]: unknown; [outputName]: z.infer<typeof output>; sourceRow: InputRow }>` | Rows that merged the original primary key with the validated schema output, plus the full `sourceRow` for convenience.      |
+| `llmRequestId`      | `string`                                                                                       | Unique identifier for tracing each Nuabase LLM execution.                                                                    |
+| `usage`             | `{ promptTokens: number; completionTokens: number; totalTokens: number }`                      | Token usage statistics for the LLM request.                                                                                  |
+| `cacheHits`         | `number`                                                                                       | Count of input rows served from Nuabase response cache.                                                                      |
+| `rowsWithNoResults` | `string[]`                                                                                     | Primary keys that could not be resolved by the model.                                                                        |
+| `isError`           | `false \| undefined`                                                                           | Absent on success; included for type narrowing.                                                                              |
 
 **Error**
 
@@ -173,27 +175,32 @@ Creates a client bound to your Nuabase account. Provide:
 - `apiKey?: string` – API key for authentication. Defaults to `process.env.NUABASE_API_KEY`.
 - `baseUrl?: string` – Override the API host. Defaults to `https://api.nuabase.com`.
 
-**`nua.map({ name, prompt, output })`**
-Declares a typed mapping function backed by Nuabase. Parameters:
+**`nua.createArrayFn({ prompt, output })`**
+Declares a typed array mapping function backed by Nuabase. Parameters:
 
-- `name: string` – Label applied to the enriched payload in each response row (e.g., `result.data[i][name]`).
 - `prompt: string` – Natural-language instructions sent to the LLM.
-- `output: ZodSchema` – Zod schema describing the output shape. Nuabase stores the JSON Schema twin and validates responses against it before returning.
+- `output: { name: string; schema: ZodSchema }` – Output configuration with a name and Zod schema describing the output shape.
 
-Returns a callable object (the mapper) with two entry points:
+Returns a callable function with two modes:
 
-- `mapper(data, primaryKey)` – Submits the job asynchronously and returns immediately with metadata and eventual results.
-- `mapper.now(data, primaryKey)` – Runs the job and waits until the full enriched result set is ready.
+- `fn(data, primaryKey)` – Default mode. Runs the job and waits until the full enriched result set is ready.
+- `fn.queue(data, primaryKey)` – Submits the job asynchronously and returns streaming metadata via SSE.
 
-Both entry points expect:
+Both modes expect:
 
 - `data: Array<Record<string, unknown>>` – Rows you want Nuabase to enrich. Each row must include the primary key.
 - `primaryKey: string` – Field name that uniquely identifies each row within `data`. The SDK throws if the field is missing on any item.
 
-Both entry points resolve to either:
+Both modes resolve to either:
 
-- **Success** – `{ isSuccess: true, data, llmRequestId, cacheHits, rowsWithNoResults }`.
+- **Success** – `{ isSuccess: true, data, llmRequestId, usage, cacheHits, rowsWithNoResults }`.
 - **Error** – `{ isError: true, error }`.
+
+**`nua.createFn({ prompt, output })`**
+Declares a typed single-value function backed by Nuabase. Similar to `createArrayFn` but for processing a single input value instead of an array. Returns a function that accepts a single input value.
+
+**`nua.getRequest(llmRequestId)`**
+Retrieves request details for a completed LLM execution using its request ID.
 
 ## Next Steps
 
