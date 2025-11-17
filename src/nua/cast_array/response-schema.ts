@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { NormalizedUsage, zs_NormalizedUsage } from '../common/normalized-usage';
+
 // We expect the primary key for the rows - both input and output - to always be string | number
 export type UserDataPKValue = string | number;
 
@@ -36,6 +38,7 @@ type NuaApiResponseShape<
   rowsWithNoResults: UserDataPKValue[];
   isSuccess: true;
   isError?: false;
+  usage: NormalizedUsage;
 };
 
 // This helper describes the exact runtime payload that the CastArray endpoint returns.
@@ -104,6 +107,7 @@ const createNuaApiResponseCastArray: NuaApiResponseCastArrayBuilder = <
       rowsWithNoResults: z.array(z.string()),
       isSuccess: z.literal(true),
       isError: z.optional(z.literal(false)),
+      usage: zs_NormalizedUsage,
     })
     .strict();
 };

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { NormalizedUsage, zs_NormalizedUsage } from '../common/normalized-usage';
+
 type NuaApiResponseShape<OutputZodSchema extends z.ZodTypeAny> = {
   llmRequestId: string;
   kind: 'cast/value';
@@ -7,6 +9,7 @@ type NuaApiResponseShape<OutputZodSchema extends z.ZodTypeAny> = {
   isCacheHit: boolean;
   isSuccess: true;
   isError?: false;
+  usage: NormalizedUsage;
 };
 
 type NuaApiResponseCastValueBuilder = <
@@ -35,6 +38,7 @@ const createNuaApiResponseCastValue: NuaApiResponseCastValueBuilder = <
       isCacheHit: z.boolean(),
       isSuccess: z.literal(true),
       isError: z.optional(z.literal(false)),
+      usage: zs_NormalizedUsage,
     })
     .strict() as z.ZodType<NuaApiResponseShape<OutputZodSchema>>;
 };
