@@ -50,7 +50,7 @@ export const createValueFn = <OutputName extends string, OutputZodSchema extends
       toCastValueApiRequest(fnDef.prompt, data, fnDef.output.name, outputJsonSchema)
     );
 
-  const baseFn = async (data: unknown): Promise<ValueFnQueuedResult> => {
+  const queueFn = async (data: unknown): Promise<ValueFnQueuedResult> => {
     const response = await sendRequest('cast/value', data);
     const error = toNuabaseError(response);
     if (error) return error;
@@ -64,7 +64,7 @@ export const createValueFn = <OutputName extends string, OutputZodSchema extends
     return parsedResponse.data;
   };
 
-  const nowFn = async (data: unknown): Promise<ValueFnResult<OutputZodSchema, OutputName>> => {
+  const baseNowFn = async (data: unknown): Promise<ValueFnResult<OutputZodSchema, OutputName>> => {
     const response = await sendRequest('cast/value/now', data);
     const error = toNuabaseError(response);
     if (error) return error;
@@ -91,7 +91,7 @@ export const createValueFn = <OutputName extends string, OutputZodSchema extends
     };
   };
 
-  return Object.assign(baseFn, {
-    now: nowFn,
+  return Object.assign(baseNowFn, {
+    queue: queueFn,
   });
 };

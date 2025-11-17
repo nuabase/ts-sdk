@@ -42,8 +42,8 @@ export type ValueFnResult<OutputZodSchema extends z.ZodTypeAny, OutputName exten
 
 export type ValueFnQueuedResult = NuabaseError | NuaQueuedResponse;
 
-// Base invocation returns queued SSE metadata; `.now` resolves with the final cast response.
+// Base invocation immediately runs and resolves with the final cast response; queue returns queued SSE metadata
 export type ValueFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends string> = {
-  (data: unknown): Promise<ValueFnQueuedResult>;
-  now: (data: unknown) => Promise<ValueFnResult<OutputZodSchema, OutputName>>;
+  (data: unknown): Promise<ValueFnResult<OutputZodSchema, OutputName>>;
+  queue: (data: unknown) => Promise<ValueFnQueuedResult>;
 };

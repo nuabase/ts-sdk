@@ -17,7 +17,7 @@ describe('sse streaming', () => {
     // We'll use a stable value so this hits the cache rather than go thru an LLM everytime.
     // For cache busting actual LLM calls, we'll do separate tests.
     const originalId = 'eyJ0eXAiOiJKV1QiLC';
-    const queuedResult = await echoQueuedId(originalId);
+    const queuedResult = await echoQueuedId.queue(originalId);
 
     if ('isError' in queuedResult) {
       throw new Error(`Error enqueuing SSE request: ${queuedResult.error}`);

@@ -103,9 +103,12 @@ export type ArrayFn<OutputZodSchema extends z.ZodTypeAny, OutputName extends str
   <PrimaryKeyName extends string, InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>>(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ): Promise<ArrayFnQueuedResult>;
-  now: <PrimaryKeyName extends string, InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>>(
+  ): Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>>;
+  queue: <
+    PrimaryKeyName extends string,
+    InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
+  >(
     data: InputRecord[],
     primaryKeyName: PrimaryKeyName
-  ) => Promise<ArrayFnResult<OutputZodSchema, OutputName, PrimaryKeyName, InputRecord>>;
+  ) => Promise<ArrayFnQueuedResult>;
 };

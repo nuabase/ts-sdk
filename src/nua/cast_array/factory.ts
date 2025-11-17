@@ -102,7 +102,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
     return undefined;
   };
 
-  const baseFn = async <
+  const queueFn = async <
     PrimaryKeyName extends string,
     InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
   >(
@@ -135,7 +135,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
     return parsedResponse.data;
   };
 
-  const nowFn = async <
+  const baseNowFn = async <
     PrimaryKeyName extends string,
     InputRecord extends PrimaryKeyedInputRecord<PrimaryKeyName>,
   >(
@@ -188,7 +188,7 @@ export const createArrayFn = <OutputName extends string, OutputZodSchema extends
     };
   };
 
-  return Object.assign(baseFn, {
-    now: nowFn,
+  return Object.assign(baseNowFn, {
+    queue: queueFn,
   });
 };

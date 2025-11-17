@@ -27,7 +27,7 @@ describe('cast/array', () => {
       { id: 3, name: 'Chapati' },
     ];
 
-    const response = await enrichCalories.now(inputData, 'id');
+    const response = await enrichCalories(inputData, 'id');
 
     if (response.isError) throw new Error(`error in api response: ${response.error}`);
 
@@ -68,7 +68,7 @@ describe('cast/array', () => {
       { id: 2, value: 10 },
     ];
 
-    const response = await returnDoubleValue.now(inputData, 'id');
+    const response = await returnDoubleValue(inputData, 'id');
 
     if (response.isError) throw new Error(`error in api response: ${response.error}`);
 

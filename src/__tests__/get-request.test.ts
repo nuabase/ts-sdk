@@ -17,7 +17,7 @@ describe('get request', () => {
       },
     });
 
-    const result = await greetingFn.now('Test user');
+    const result = await greetingFn('Test user');
 
     if (result.isError) {
       throw new Error(`Unexpected error from cast/value now: ${result.error}`);

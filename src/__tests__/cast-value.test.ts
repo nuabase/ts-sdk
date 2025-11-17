@@ -30,7 +30,7 @@ describe('cast/value', () => {
 Chatswood NSW 2067
 Australia`;
 
-    const response = await extractAddressFromFreeformText.now(inputData);
+    const response = await extractAddressFromFreeformText(inputData);
 
     if (response.isError) throw new Error(`error in api response: ${response.error}`);
     expect(response).toBeTruthy();
@@ -50,7 +50,7 @@ Australia`;
       },
     });
 
-    const response = await returnTheNumberTen.now(null);
+    const response = await returnTheNumberTen(null);
 
     if (response.isError) throw new Error(`error in api response: ${response.error}`);
 
