@@ -26,3 +26,7 @@ yarn.lock
 .DS_Store
 CONTRIBUTING.md
 renovate.json
+LLM-MAIN-INSTRUCTION.md
+GEMINI.md
+CLAUDE.md
+AGENT.md
